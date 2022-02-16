@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pong</title>
+    <style>
+        html,
+        body {
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.querySelector("#canvas");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const ctx = canvas.getContext("2d");
+
+        class Paddle {
+            constructor(x, y, color, upkeycode, downkeycode) {
+                this.x = x;
+                this.y = y;
+
+                this.width = 25;
+                this.height = 250;
+
+                this.color = color;
+
+                this.upkeycode = upkeycode;
+                this.downkeycode = downkeycode;
+
+                this.speed = 10;
+            }
+
+            update() {
+                for (let keycode in held) {
+                    // do keyboard input
+                    if (keycode == this.upkeycode && this.y > 0) {
+                        this.y -= this.speed;
+                    }
+
+                    if (keycode == this.downkeycode && this.y + this.height < window.innerHeight) {
+                        this.y += this.speed;
+                    }
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+
+            bounceBall(ball) {
+                if (ball.x - ball.radius < this.x + this.width &&
+                    ball.x + ball.radius > this.x &&
+                    ball.y + ball.radius > this.y &&
+                    ball.y - ball.radius < this.y + this.height) {
+                    ball.xDirection *= -1;
+                    ball.yVel += Math.floor(Math.random() * 2) == 0 ? 1 : -2;
+                    if (ball.xVel < ball.speedCap && ball.xVel < ball.speedCap) {
+                        ball.xVel += Math.floor(Math.random() * 2) == 0 ? 2 : -1;
+                        if (ball.xVel <= 0) ball.xVel = 1;
+                        ball.yVel += 1;
+                    }
+                }
+            }
+        }
+
+        class Ball {
+            constructor(initialXvel, initialYvel, x, y) {
+                this.xDirection = 1;
+                this.yDirection = 1;
+                this.xVel = initialXvel;
+                this.yVel = initialYvel;
+                this.x = x;
+                this.y = y;
+                this.radius = 10;
+
+                this.speedCap = 35;
+
+                this.color = ["white", "white", "white", "white"];
+            }
+
+            update() {
+                this.x += this.xVel * this.xDirection;
+                this.y += this.yVel * this.yDirection;
+
+                this.bounceWalls();
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.fillStyle = this.color[Math.floor(Math.random() * this.color.length)];
+                ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+
+            bounceWalls() {
+                if (this.y + this.radius > window.innerHeight || this.y - this.radius < 0) {
+                    this.yDirection *= -1;
+                }
+
+                if (this.x + this.radius > window.innerWidth) {
+                    return "right";
+                }
+                if (this.x - this.radius < 0) {
+                    return "left";
+                }
+            }
+        }
+
+        const game = {
+            paddles: [
+                new Paddle(10, 150, "white", 87, 83),
+                new Paddle(window.innerWidth - 35, 150, "white", 38, 40)
+            ],
+            leftScore: 0,
+            rightScore: 0,
+            ball: new Ball(5, 5, window.innerWidth / 2, window.innerHeight / 2),
+            start: function () {
+
+            },
+            draw: function () {
+                ctx.fillStyle = "black";
+                ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+                this.ball.draw();
+                for (let paddle of this.paddles) {
+                    paddle.draw();
+                }
+
+                ctx.fillStyle = "white";
+                ctx.font = "50px Arial";
+                //fill left score as text on the left side of the screen
+                ctx.fillText(this.leftScore, window.innerWidth / 4, 50);
+                //fill right score as text on the right side of the screen
+                ctx.fillText(this.rightScore, window.innerWidth * 3 / 4, 50);
+            },
+            update: function () {
+                this.ball.update();
+                for (let paddle of this.paddles) {
+                    paddle.update();
+                    paddle.bounceBall(this.ball);
+                    if (this.ball.bounceWalls() == "right") {
+                        this.leftScore++;
+                        this.ball.x = window.innerWidth / 2;
+                        this.ball.y = window.innerHeight / 2;
+                        this.ball.xVel = 5;
+                        this.ball.yVel = 5;
+                    }
+                    else if (this.ball.bounceWalls() == "left") {
+                        this.rightScore++;
+                        this.ball.x = window.innerWidth / 2;
+                        this.ball.y = window.innerHeight / 2;
+                        this.ball.xVel = -5;
+                        this.ball.yVel = 5;
+                    }
+                }
+            }
+        }
+
+        game.start();
+
+        setInterval(() => {
+            game.update();
+            game.draw();
+        }, 1000 / 60);
+
+        let held = {}
+        window.addEventListener("keydown", function (info) {
+            held[event.keyCode] = true;
+        }, false);
+
+        window.addEventListener("keyup", function (info) {
+            delete held[event.keyCode];
+        }, false)
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="cn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shooting Game</title>
+    <style>
+        html,
+        body {
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.querySelector("#canvas");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const ctx = canvas.getContext("2d");
+
+        class Player {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+
+                this.width = 35;
+                this.height = 35;
+                this.color = "blue";
+
+                this.speed = 6;
+
+                this.lasers = [];
+                this.health = 100;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+
+                for (let laser of this.lasers) {
+                    laser.draw();
+                }
+            }
+
+            update() {
+                for (let keyCode in held) {
+                    this.doKeyboardInput(keyCode);
+                }
+
+                for (let laser of this.lasers) {
+                    laser.update();
+                }
+            }
+
+            doKeyboardInput(keycode) {
+                // do keyboard input
+                if (keycode == 87) {
+                    this.y -= this.speed;
+                }
+
+                if (keycode == 83) {
+                    this.y += this.speed;
+                }
+
+                if (keycode == 65) {
+                    this.x -= this.speed;
+                }
+
+                if (keycode == 68) {
+                    this.x += this.speed;
+                }
+
+                if (keycode == 32 && game.time % 10 == 0) {
+                    let laser = new Laser(this.x + 15, this.y, 10);
+                    this.lasers.push(laser);
+                }
+            }
+        }
+
+        class Laser {
+            constructor(x, y, speed) {
+                this.x = x;
+                this.y = y;
+
+                this.width = 13;
+                this.height = 15;
+
+                this.drawWidth = 5;
+                this.drawHeight = 7;
+
+                this.speed = speed;
+            }
+
+            draw() {
+                ctx.fillStyle = "white";
+                ctx.fillRect(this.x, this.y, this.drawWidth, this.drawHeight);
+            }
+
+            update() {
+                this.y -= this.speed;
+            }
+        }
+
+        class Enemy {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+
+                this.width = 25;
+                this.height = 25;
+                this.speed = 1;
+
+                this.color = "purple";
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+
+            update() {
+                // do enemy movement
+                this.y += this.speed;
+            }
+        }
+
+        const game = {
+            player: new Player(500, 500),
+            enemies: [],
+            time: 0,
+            gameover: false,
+            collide(obj1, obj2) {
+                return obj1.x < obj2.x + obj2.width &&
+                    obj1.x + obj1.width > obj2.x &&
+                    obj1.y < obj2.y + obj2.height &&
+                    obj1.y + obj1.height > obj2.y;
+            },
+            spawnEnemies: function () {
+                const interval = 50;
+                let x = 200;
+                let y = 50;
+                for (let i = 0; i < 50; i++) {
+                    x += interval;
+                    let enemy = new Enemy(x, y);
+                    this.enemies.push(enemy);
+                    if (i % 10 == 0 && i > 0) {
+                        x = 200;
+                        y += interval;
+                    }
+                }
+            },
+            start: function () {
+                this.spawnEnemies();
+            },
+            update: function () {
+                if (!this.gameover) {
+                    this.player.update();
+                    for (let enemy of this.enemies) {
+                        enemy.update();
+                        for (let laser of this.player.lasers) {
+                            if (this.collide(laser, enemy)) {
+                                this.enemies.splice(this.enemies.indexOf(enemy), 1);
+                            }
+                        }
+                        if (this.collide(enemy, this.player)) {
+                            this.player.health --;
+                        }
+                    }
+                    if (this.enemies.length == 0) {
+                        this.spawnEnemies();
+                    }
+                    if(this.player.health <= 0)
+                    {
+                        this.gameover = true;
+                    }
+
+                    this.time++;
+                }
+            },
+            draw: function () {
+                ctx.fillStyle = "black";
+                ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+                this.player.draw();
+                for (let enemy of this.enemies) {
+                    enemy.draw();
+                }
+
+                ctx.fillStyle = "red";
+                ctx.fillRect(10, 10, this.player.health / 100 * 200, 50);
+            }
+        }
+
+        game.start();                                 
+
+        setInterval(() => {
+            game.update();
+            game.draw();
+        }, 1000 / 60);
+
+        let held = {}
+        window.addEventListener("keydown", function (info) {
+            held[event.keyCode] = true;
+        }, false);
+
+        window.addEventListener("keyup", function (info) {
+            delete held[event.keyCode];
+        }, false)
+    </script>
+</body>
+
+</html>
