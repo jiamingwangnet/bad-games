@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dle</title>
+    <style>
+        .center {
+            /*center div*/
+            margin: 0 auto;
+            width: 60%;
+            height: 100%;
+            text-align: center;
+        }
+
+        body {
+            background-color: black;
+        }
+
+        .game {
+            background-color: rgb(2, 2, 2);
+            font-family: Arial, Helvetica, sans-serif;
+            color: white;
+        }
+
+        .letterHolder {
+            background-color: rgb(7, 7, 7);
+            color: white;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 20px;
+            border: none;
+            border-radius: 5px;
+            padding: 5px;
+            margin: 5px;
+            width: 50px;
+            height: 50px;
+            display: inline-block;
+        }
+        
+        .letterHolder p {
+            padding: 15px;
+            margin: 0;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .keyboard button
+        {
+            background-color: rgb(15, 15, 15);
+            color: white;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 15px;
+            border: none;
+            border-radius: 5px;
+            padding: 5px;
+            margin: 2px;
+            width: 40px;
+            height: 40px;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="center game">
+        <h2>Guess The Word</h2>
+        <div id="gameInput">
+            
+        </div>
+
+        <div class="keyboard">
+            <button onclick="getKey(this)">Q</button>
+            <button onclick="getKey(this)">W</button>
+            <button onclick="getKey(this)">E</button>
+            <button onclick="getKey(this)">R</button>
+            <button onclick="getKey(this)">T</button>
+            <button onclick="getKey(this)">Y</button>
+            <button onclick="getKey(this)">U</button>
+            <button onclick="getKey(this)">I</button>
+            <button onclick="getKey(this)">O</button>
+            <button onclick="getKey(this)">P</button>
+            <br>
+            <button onclick="getKey(this)">A</button>
+            <button onclick="getKey(this)">S</button>
+            <button onclick="getKey(this)">D</button>
+            <button onclick="getKey(this)">F</button>
+            <button onclick="getKey(this)">G</button>
+            <button onclick="getKey(this)">H</button>
+            <button onclick="getKey(this)">J</button>
+            <button onclick="getKey(this)">K</button>
+            <button onclick="getKey(this)">L</button>
+            <br>
+            <button onclick="getKey(this)">Z</button>
+            <button onclick="getKey(this)">X</button>
+            <button onclick="getKey(this)">C</button>
+            <button onclick="getKey(this)">V</button>
+            <button onclick="getKey(this)">B</button>
+            <button onclick="getKey(this)">N</button>
+            <button onclick="getKey(this)">M</button>
+            <br>
+            <button onclick="getKey(this)" style="width: 150px;">Enter</button>
+            <button onclick="getKey(this)" style="width: 150px;">Backspace</button>
+        </div>    
+    </div>
+
+    <script>
+        const guesses = 6;
+        const wordLength = 5;
+        // create a list of five letter words
+        const words = ["apple", "grape"];
+        const word = getRandomWord();
+
+        const colors = {correct: "green", incorrect: "rgb(7, 7, 7)", wrongPlace: "orange"};
+
+        const holders = [];
+        let currentInput = {row: 0, col: 0};
+
+        let hasWon = false;
+
+        function getRandomWord() {
+            return words[Math.floor(Math.random() * words.length)];
+        }
+
+        function createLetterHolders()
+        {
+            for(let i = 0; i < guesses; i++)
+            {
+                const row = document.createElement("div");
+                row.className = "row";
+                const rowList = [];
+
+                for(let i = 0; i < wordLength; i++)
+                {
+                    const letterHolder = document.createElement("div");
+                    letterHolder.className = "letterHolder";
+                    row.appendChild(letterHolder);
+                    rowList.push(letterHolder);
+                }
+
+                document.getElementById("gameInput").appendChild(row);
+                holders.push(rowList);
+            }
+        }
+
+        createLetterHolders();
+
+        function getKey(button)
+        {
+            if(hasWon)
+            {
+                return;
+            }
+            const letter =  button.innerText;
+
+            if(letter != "Space" && letter != "Backspace")
+            {
+                const l = document.createElement("p");
+                l.innerText = letter;
+
+                holders[currentInput.row][currentInput.col].appendChild(l);
+
+                currentInput.col++;
+                if(currentInput.col >= wordLength)
+                {
+                    check();
+                    currentInput.col = 0;
+                    currentInput.row++;
+                }
+            }
+
+            if(letter == "Backspace")
+            {
+                holders[currentInput.row][currentInput.col - 1].removeChild(holders[currentInput.row][currentInput.col - 1].lastChild);
+                currentInput.col--;
+            }
+        }
+
+        function getKeyboard(key)
+        {
+            if(hasWon)
+            {
+                return;
+            }
+            if(/^[A-Za-z]$/.test(key))
+            {
+                const l = document.createElement("p");
+                l.innerText = key;
+
+                holders[currentInput.row][currentInput.col].appendChild(l);
+
+                currentInput.col++;
+                if(currentInput.col >= wordLength)
+                {
+                    check();
+                    currentInput.col = 0;
+                    currentInput.row++;
+                }
+            }
+            if(key == "backspace")
+            {
+                holders[currentInput.row][currentInput.col - 1].removeChild(holders[currentInput.row][currentInput.col - 1].lastChild);
+                currentInput.col--;
+            }
+        }
+
+        function check()
+        {
+            let fullword = "";
+
+            for(let i = 0; i < wordLength; i++)
+            {
+                const letter = holders[currentInput.row][i].innerText;
+                if(letter == "")
+                {
+                    return;
+                }
+
+                if(letter == word[i])
+                {
+                    holders[currentInput.row][i].style.backgroundColor = colors.correct;
+                }
+                else if(word.indexOf(letter) != -1)
+                {
+                    holders[currentInput.row][i].style.backgroundColor = colors.wrongPlace;
+                }
+                else
+                {
+                    holders[currentInput.row][i].style.backgroundColor = colors.incorrect;
+                }
+
+                fullword += letter;
+            }
+
+            if(fullword == word)
+            {
+                hasWon = true;
+            }
+        }
+
+        document.addEventListener("keydown", function(event) {
+            getKeyboard(event.key);
+        });
+    </script>
+</body>
+
+</html>
